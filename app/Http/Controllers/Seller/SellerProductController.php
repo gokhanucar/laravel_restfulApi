@@ -10,6 +10,7 @@ use App\Http\Controllers\ApiController;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Illuminate\Support\Facades\Storage;
 use App\Transformers\ProductTransformer;
+use Illuminate\Auth\Access\AuthorizationException;
 
 class SellerProductController extends ApiController
 {
@@ -18,6 +19,12 @@ class SellerProductController extends ApiController
         parent::__construct();
 
         $this->middleware('transform.input:' . ProductTransformer::class)->only(['store', 'update']);
+        $this->middleware('scope:manage-products')->except(['index']);
+
+        $this->middleware('can:view,seller')->only('index');
+        $this->middleware('can:sale,seller')->only('store');
+        $this->middleware('can:edit-product,seller')->only('update');
+        $this->middleware('can:delete-product,seller')->only('destroy');
     }
 
     /**
@@ -27,9 +34,13 @@ class SellerProductController extends ApiController
      */
     public function index(Seller $seller)
     {
-        $products = $seller->products;
+        if (request()->user()->tokenCan('read-general') || request()->user()->tokenCan('manage-products')) {
+            $products = $seller->products;
 
-        return $this->showAll($products);
+            return $this->showAll($products);
+        }
+        
+        throw new AuthorizationException("Invalid scope(s)", 1);
     }
 
     /**
