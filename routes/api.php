@@ -55,6 +55,7 @@ use Illuminate\Http\Request;
 
  // Users
  Route::resource('users', 'User\UserController', ['except' => ['create', 'edit']]);
+ Route::name('me')->get('users/me', 'User\UserController@me');
  Route::name('verify')->get('users/verify/{token}', 'User\UserController@verify');
  Route::name('resend')->get('users/{user}/resend', 'User\UserController@resend');
 
